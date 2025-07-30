@@ -1,0 +1,12 @@
+###
+### Python Base Image
+###
+FROM fedora-core-base-image:latest
+
+RUN set -eux; \
+    # Install packages
+    sudo dnf install -y gcc gdb cmake ninja-build python python-pip; \
+    # Install Python dependencies
+    pip install --no-cache-dir --user ipykernel virtualenv; \
+    # Clean step
+    sudo dnf clean all

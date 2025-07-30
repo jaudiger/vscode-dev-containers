@@ -1,0 +1,41 @@
+###
+### Core Base Image
+###
+FROM fedora:42
+
+# Create the user
+ARG USERNAME=container
+ARG USER_UID=1000
+ARG USER_GID=${USER_UID}
+
+RUN set -eux; \
+    groupadd --gid ${USER_GID} ${USERNAME}; \
+    useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME}; \
+    usermod -a -G wheel ${USERNAME}; \
+    echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Switch to the new user
+USER ${USERNAME}
+
+# Configure the image
+RUN set -eux; \
+    # Disable unwanted repositories
+    sudo dnf update --refresh -y; \
+    sudo dnf install -y dnf-plugins-core; \
+    sudo dnf config-manager setopt fedora-cisco-openh264.enabled=0; \
+    sudo dnf remove -y dnf-plugins-core; \
+    # Default packages
+    sudo dnf install -y bash-completion nano openssh which git; \
+    sudo sh -c "$(curl -sSL https://starship.rs/install.sh)" -- -y; \
+    # Initialize cache folder (for correct user permission)
+    mkdir -p ${HOME}/.cache; \
+    # Initialize vscode server folder (for correct user permission)
+    mkdir -p ${HOME}/.vscode-server/extensions; \
+    chown -R ${USERNAME} ${HOME}/.vscode-server; \
+    # Clean step
+    sudo dnf clean all
+
+# Copy the configuration
+COPY --chown=${USER_UID}:${USER_GID} ./misc/.config /home/${USERNAME}/.config
+COPY --chown=${USER_UID}:${USER_GID} ./misc/.kube /home/${USERNAME}/.kube
+COPY --chown=${USER_UID}:${USER_GID} ./misc/.ssh /home/${USERNAME}/.ssh

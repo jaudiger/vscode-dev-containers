@@ -1,0 +1,19 @@
+###
+### Texlive Base Image
+###
+FROM fedora-core-base-image:latest
+
+RUN set -eux; \
+    # Install packages
+    sudo dnf install -y yarnpkg nodejs chromium pandoc xsel texlive-latex texlive-babel-english texlive-adjustbox texlive-ec texlive-footnotebackref texlive-footnotehyper texlive-fvextra texlive-metafont texlive-pagecolor texlive-mdframed texlive-ly1 texlive-titling texlive-hardwrap texlive-grfext texlive-sourcesanspro texlive-sourcecodepro; \
+    # Install mermaid
+    sudo yarn global add @mermaid-js/mermaid-cli@9.3.0 mermaid-filter@1.4.6; \
+    # Clean step
+    sudo yarn cache clean --all; \
+    sudo dnf remove -y yarnpkg; \
+    sudo dnf clean all
+
+# Set environment variables
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    MERMAID_BIN=mmdc

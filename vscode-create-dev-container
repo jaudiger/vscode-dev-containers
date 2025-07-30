@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) Jérémy Audiger.
+# All rights reserved.
+#
+
+print_usage_and_exit () {
+    echo "Usage: $0 [OPTIONS]"
+    echo "  OPTIONS:"
+    echo "    -c, --copy: Copy instead of doing a symbolic link"
+    echo "    -f, --force: Force the creation"
+    echo "    -v, --variant: Variant used"
+    echo "    --help: Display this help and exit"
+
+    exit 1
+}
+
+# Default constants
+VARIANT="core"
+FORCE=0
+COPY=0
+
+readonly VSCODE_DEV_CONTAINER_PATH="${HOME}/Development/git-repositories/jaudiger/vscode-dev-containers"
+readonly DEVCONTAINER_FOLDER_NAME=".devcontainer"
+
+# Option parsing
+while [[ "$#" -gt 0 ]]; do
+  case "${1}" in
+    -c)
+        COPY=1
+        shift 1
+    ;;
+
+    --copy)
+        COPY=1
+        shift 1
+    ;;
+
+    -f)
+        FORCE=1
+        shift 1
+    ;;
+
+    --force)
+        FORCE=1
+        shift 1
+    ;;
+
+    -v)
+        VARIANT=${2}
+        shift 2
+    ;;
+
+    --variant)
+        VARIANT=${2}
+        shift 2
+    ;;
+
+    --help)
+        print_usage_and_exit
+    ;;
+
+    -*)
+        echo "Invalid option ${1}."
+        print_usage_and_exit
+    ;;
+
+    *)
+        break
+    ;;
+  esac
+done
+
+# Create symbolic links
+COMMON_PATH=${VSCODE_DEV_CONTAINER_PATH}/images/variants/${VARIANT}
+CURRENT_DIR_NAME=${PWD##*/}
+
+if [[ "${CURRENT_DIR_NAME}" = "${DEVCONTAINER_FOLDER_NAME}" ]]; then
+    if [[ -f "Dockerfile" ]] || [[ -f "devcontainer.json" ]]; then
+        if [[ ${FORCE} = 0 ]]; then
+            echo "At least, one of the devcontainer files already exist. Script aborting"
+            exit 1
+        fi
+
+        rm Dockerfile
+        rm devcontainer.json
+    fi
+
+    if [[ ${COPY} = 0 ]]; then
+        ln -s "${COMMON_PATH}/Dockerfile" .
+        ln -s "${COMMON_PATH}/devcontainer.json" .
+    else
+        cp "${COMMON_PATH}/Dockerfile" .
+        cp "${COMMON_PATH}/devcontainer.json" .
+    fi
+else
+    if [[ -d "${DEVCONTAINER_FOLDER_NAME}" ]]; then
+        if [[ ${FORCE} = 0 ]]; then
+            echo "${DEVCONTAINER_FOLDER_NAME} already exist. Script aborting"
+            exit 1
+        fi
+
+        rm -rf "${DEVCONTAINER_FOLDER_NAME}"
+    fi
+
+    mkdir "${DEVCONTAINER_FOLDER_NAME}"
+
+    if [[ ${COPY} = 0 ]]; then
+        ln -s "${COMMON_PATH}/Dockerfile" "${DEVCONTAINER_FOLDER_NAME}/"
+        ln -s "${COMMON_PATH}/devcontainer.json" "${DEVCONTAINER_FOLDER_NAME}/"
+    else
+        cp "${COMMON_PATH}/Dockerfile" "${DEVCONTAINER_FOLDER_NAME}/"
+        cp "${COMMON_PATH}/devcontainer.json" "${DEVCONTAINER_FOLDER_NAME}/"
+    fi
+fi

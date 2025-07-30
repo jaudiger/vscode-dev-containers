@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) Jérémy Audiger.
+# All rights reserved.
+#
+
+print_usage_and_exit () {
+    echo "Usage: $0 [OPTIONS]"
+    echo "  OPTIONS:"
+    echo "    -v, --variant: Variant used"
+    echo "    -p, --platform: Platform used"
+    echo "    --help: Display this help and exit"
+
+    exit 1
+}
+
+build_dev_image () {
+    local -r distribution=${1}
+    local -r variant=${2}
+    local -r platform=${3}
+
+    echo "Building ${distribution}-${variant}-base-image for ${platform}"
+
+    if [[ -f "${VSCODE_DEV_CONTAINER_PATH}/images/base/Dockerfile.${variant}" ]]; then
+        # Derive the tag from the platform
+        if [[ "${platform}" == "${DEFAULT_PLATFORM}" ]]; then
+            local -r tag="latest"
+        else
+            # Replace / with - for the platform
+            local -r tag="latest-$(echo "${platform}" | (tr / - || true))"
+        fi
+
+        docker image rm "${distribution}-${variant}-base-image:${tag}"
+        docker build --platform "${platform}" -f "${VSCODE_DEV_CONTAINER_PATH}/images/base/Dockerfile.${variant}" -t "${distribution}-${variant}-base-image:${tag}" "${VSCODE_DEV_CONTAINER_PATH}"
+    fi
+}
+
+# Default constants
+VARIANT=""
+DEFAULT_PLATFORM=$(docker system info --format '{{.OSType}}/{{.Architecture}}')
+PLATFORM=${DEFAULT_PLATFORM}
+
+readonly VSCODE_DEV_CONTAINER_PATH="${HOME}/Development/git-repositories/jaudiger/vscode-dev-containers"
+readonly VARIANTS=(
+    core
+    c
+    devops
+    go
+    java
+    nodejs
+    python
+    rust
+    rust-embedded
+    texlive
+)
+
+# Option parsing
+while [[ "$#" -gt 0 ]]; do
+  case "${1}" in
+    -v)
+        VARIANT=${2}
+        shift 2
+    ;;
+
+    --variant)
+        VARIANT=${2}
+        shift 2
+    ;;
+
+    -p)
+        PLATFORM=${2}
+        shift 2
+    ;;
+
+    --platform)
+        PLATFORM=${2}
+        shift 2
+    ;;
+
+    --help)
+        print_usage_and_exit
+    ;;
+
+    -*)
+        echo "Invalid option ${1}."
+        print_usage_and_exit
+    ;;
+
+    *)
+        break
+    ;;
+  esac
+done
+
+if [[ -z ${VARIANT} ]]; then
+    for variant in "${VARIANTS[@]}"
+    do
+        build_dev_image fedora "${variant}" "${PLATFORM}"
+    done
+else
+    build_dev_image fedora "${VARIANT}" "${PLATFORM}"
+fi

@@ -1,0 +1,42 @@
+###
+### Rust Embedded Base Image
+###
+FROM fedora-core-base-image:latest
+
+ARG ADDITIONAL_RUSTUP_TARGETS="thumbv7m-none-eabi"
+
+RUN set -eux; \
+    # Install packages
+    sudo dnf install -y systemd-devel bzip2 pkgconfig cmake ninja-build gcc gdb rust-gdb qemu-system-arm; \
+    # Install rustup
+    sh -c "$(curl -sSL https://sh.rustup.rs)" -- -y --no-modify-path; \
+    # Initialize cargo cache folder (for correct user permission)
+    mkdir -p ${HOME}/.cargo/registry; \
+    # Install additional rustup targets
+    ${HOME}/.cargo/bin/rustup target add ${ADDITIONAL_RUSTUP_TARGETS}; \
+    # Install Rust (stable)
+    ${HOME}/.cargo/bin/rustup install stable; \
+    ${HOME}/.cargo/bin/rustup component add rust-docs; \
+    ${HOME}/.cargo/bin/rustup component add rust-src; \
+    ${HOME}/.cargo/bin/rustup component add rustfmt; \
+    ${HOME}/.cargo/bin/rustup component add rls; \
+    ${HOME}/.cargo/bin/rustup component add rust-analysis; \
+    ${HOME}/.cargo/bin/rustup component add clippy; \
+    ${HOME}/.cargo/bin/rustup component add llvm-tools-preview; \
+    (${HOME}/.cargo/bin/rustup component add miri || true); \
+    # Install Rust (nightly)
+    ${HOME}/.cargo/bin/rustup install nightly; \
+    (${HOME}/.cargo/bin/rustup +nightly component add rustfmt || true); \
+    (${HOME}/.cargo/bin/rustup +nightly component add rls || true); \
+    (${HOME}/.cargo/bin/rustup +nightly component add rust-analysis || true); \
+    (${HOME}/.cargo/bin/rustup +nightly component add clippy || true); \
+    (${HOME}/.cargo/bin/rustup +nightly component add llvm-tools-preview || true); \
+    (${HOME}/.cargo/bin/rustup +nightly component add miri || true); \
+    # Install additional cargo packages
+    ${HOME}/.cargo/bin/cargo install cargo-binutils; \
+    ${HOME}/.cargo/bin/cargo install cargo-embed; \
+    # Install grcov
+    curl -sSL https://github.com/mozilla/grcov/releases/latest/download/grcov-x86_64-unknown-linux-gnu.tar.bz2 | sudo tar jxf - -C /usr/local/bin; \
+    # Clean step
+    sudo dnf remove -y systemd-devel bzip2; \
+    sudo dnf clean all

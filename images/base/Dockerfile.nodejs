@@ -1,0 +1,10 @@
+###
+### Node.js Base Image
+###
+FROM fedora-core-base-image:latest
+
+RUN set -eux; \
+    # Install packages
+    sudo dnf install -y nodejs npm; \
+    # Clean step
+    sudo dnf clean all

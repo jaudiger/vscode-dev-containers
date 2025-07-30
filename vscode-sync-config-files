@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) Jérémy Audiger.
+# All rights reserved.
+#
+
+print_usage_and_exit () {
+    echo "Usage: $0 [OPTIONS]"
+    echo "  OPTIONS:"
+    echo "    --dry-run: Dry-run operation"
+    echo "    --help: Display this help and exit"
+
+    exit 1
+}
+
+sync_config () {
+    local -r TARGET_PATH="${1}"
+    local -r ROOT_TARGET_PATH="${HOME}/${TARGET_PATH}"
+    local -r LOCAL_TARGET_PATH="${LOCAL_PATH}/${TARGET_PATH}"
+
+    if [[ -d "${ROOT_TARGET_PATH}" ]]; then
+        echo "Directory: ${ROOT_TARGET_PATH}"
+
+        # Check if the directory already exist locally
+        if [[ -d "${LOCAL_TARGET_PATH}" ]]; then
+            echo "Removing ${LOCAL_TARGET_PATH}"
+
+            # Check dry-run before to do the actual operation
+            if [[ ${DRY_RUN} = 0 ]]; then
+                rm -rf "${LOCAL_TARGET_PATH}"
+            fi
+        fi
+
+        # Fullfill an array with the subpaths
+        readarray -t SUB_PATH < <(
+          find "${ROOT_TARGET_PATH}" -mindepth 1 -maxdepth 1 -exec basename {} \; || true
+        )
+
+        # Recursive path
+        for path in "${SUB_PATH[@]}"
+        do
+            sync_config "${TARGET_PATH}/${path}"
+        done
+    elif [[ -f "${ROOT_TARGET_PATH}" ]]; then
+        # Check if the file already exist locally
+        if [[ -f "${LOCAL_TARGET_PATH}" ]]; then
+            echo "Removing ${LOCAL_TARGET_PATH}"
+
+            # Check dry-run before to do the actual operation
+            if [[ ${DRY_RUN} = 0 ]]; then
+                rm -rf "${LOCAL_TARGET_PATH}"
+            fi
+        fi
+
+        echo "Copy file ${ROOT_TARGET_PATH} -> ${LOCAL_TARGET_PATH}"
+
+        # Check dry-run before to do the actual operation
+        if [[ ${DRY_RUN} = 0 ]]; then
+            mkdir -p "$(dirname "${LOCAL_TARGET_PATH}")"
+            cp "${ROOT_TARGET_PATH}" "${LOCAL_TARGET_PATH}"
+        fi
+    else
+        echo "Unhandled path: ${ROOT_TARGET_PATH}"
+    fi
+}
+
+# Default constants
+readonly SYNCING_PATH=(
+    .config/git # Folder
+    .config/starship.toml
+    .kube/config
+    .ssh # Folder
+)
+LOCAL_PATH="$(dirname "$(readlink -f "${0}" || true)")/misc"
+DRY_RUN=0
+
+# Option parsing
+while [[ "$#" -gt 0 ]]; do
+  case "${1}" in
+    --dry-run)
+        DRY_RUN=1
+        shift 1
+    ;;
+
+    --help)
+        print_usage_and_exit
+    ;;
+
+    -*)
+        echo "Invalid option ${1}."
+        print_usage_and_exit
+    ;;
+
+    *)
+        break
+    ;;
+  esac
+done
+
+for path in "${SYNCING_PATH[@]}"
+do
+    sync_config "${path}"
+done

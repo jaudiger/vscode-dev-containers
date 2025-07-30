@@ -1,0 +1,42 @@
+{
+    // A name for the dev container displayed in the UI
+    "name": "DevEnv",
+
+    // Docker build-related options
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "ADDITIONAL_PACKAGES": ""
+        }
+    },
+
+    // Tool-specific configuration
+    "customizations": {
+        "vscode": {
+            // Set *default* container specific settings.json values on container create
+            "settings": {},
+
+            // Add the IDs of extensions you want installed when the container is created
+            "extensions": []
+        }
+    },
+
+    // Mount specific volumes into the container
+    "mounts": [
+        "source=fedora-dnf-cache,target=/var/cache/dnf,type=volume",
+        "source=fedora-bash-history,target=/home/container/.cache/bash_history,type=volume",
+        "source=fedora-python-vscode-server-extensions,target=/home/container/.vscode-server/extensions,type=volume"
+    ],
+
+    // Use 'forwardPorts' to make a list of ports inside the container available locally
+    "forwardPorts": [],
+
+    // Use 'postCreateCommand' to run commands after the container is created
+    "postCreateCommand": "",
+
+    // The arguments required when starting in the container
+    "runArgs": [],
+
+    // The default user inside the container
+    "containerUser": "container"
+}

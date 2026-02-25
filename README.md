@@ -1,6 +1,6 @@
 # VSCode Dev Containers
 
-## Instructions
+## Getting Started
 
 This repository contains dedicated scripts to automate the management of [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers) for Visual Studio Code.
 
@@ -24,15 +24,3 @@ To use this repository, follow these steps:
 2. Build the desired dev container using the `vscode-sync-dev-images -v VARIANT` command where `VARIANT` is the name of the container you want to build.
 3. Create the `.devcontainer` folder inside your project using the `vscode-sync-dev-images -v VARIANT` command. Warning: this command must be called from the root of your project.
 4. Install the VSCode [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) and open the folder of your project with VSCode. A popup should open asking you to reopen the folder in a container.
-
-## CI / CD
-
-The CI/CD pipeline is configured using GitHub Actions. The workflow is defined in the [`.github/workflows`](.github/workflows) folder:
-
-- Static Analysis (Bash scripts, GitHub Actions)
-
-Additionally, Dependabot is configured to automatically update dependencies (GitHub Actions).
-
-## Repository configuration
-
-The settings of this repository are managed from the [gitops-deployments](https://github.com/jaudiger/gitops-deployments) repository using Terraform. The actual configuration applied is located in the Terraform module [`modules/github-repository`](https://github.com/jaudiger/gitops-deployments/tree/main/modules/github-repository).
